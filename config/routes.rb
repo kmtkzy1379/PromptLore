@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  # ルートパスにアクセスしたらarticles#indexアクションを呼び出す
+  root "articles#index"
   # articles取ったらindexアクションを呼び出す
   get "/articles", to: "articles#index"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
