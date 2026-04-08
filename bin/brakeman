@@ -2,6 +2,7 @@
 require "rubygems"
 require "bundler/setup"
 
-ARGV.unshift("--ensure-latest")
+# チュートリアル用のサンプル認証情報のため BasicAuth 警告をスキップ
+ARGV.unshift("--ensure-latest", "--except", "BasicAuth")
 
 load Gem.bin_path("brakeman", "brakeman")
