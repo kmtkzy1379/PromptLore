@@ -1,0 +1,40 @@
+<h1>PromptLore</h1>
+<p>Share your Claude.md and Skills with the community.</p>
+
+<%= form_tag root_path, method: :get do %>
+  <div>
+    <%= text_field_tag :q, params[:q], placeholder: "Search repositories..." %>
+    <%= select_tag :file_type, options_for_select([["All types", ""], ["CLAUDE.md", "claude_md"], ["Skill", "skill"]], params[:file_type]) %>
+    <%= select_tag :category_id, options_for_select([["All categories", ""]] + Category.pluck(:name, :id), params[:category_id]) %>
+    <%= text_field_tag :tag, params[:tag], placeholder: "Tag search..." %>
+    <%= select_tag :sort, options_for_select([["Newest", "newest"], ["Oldest", "oldest"], ["Popular", "popular"], ["Trending", "trending"]], params[:sort]) %>
+    <%= submit_tag "Search" %>
+  </div>
+<% end %>
+
+<hr>
+
+<% if @repositories.any? %>
+  <% @repositories.each do |repo| %>
+    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+      <h3><%= link_to repo.name, repository_path(repo) %></h3>
+      <p>
+        <strong>Type:</strong> <%= repo.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %> |
+        <strong>By:</strong> <%= link_to repo.user.username, user_path(repo.user) %> |
+        <strong>Likes:</strong> <%= repo.likes_count %> |
+        <strong>Downloads:</strong> <%= repo.downloads_count %>
+      </p>
+      <p><%= truncate(repo.description, length: 150) %></p>
+      <% if repo.categories.any? %>
+        <p><strong>Categories:</strong> <%= repo.categories.pluck(:name).join(", ") %></p>
+      <% end %>
+      <% if repo.tags.any? %>
+        <p><strong>Tags:</strong> <%= repo.tags.pluck(:name).join(", ") %></p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%== @pagy.series_nav %>
+<% else %>
+  <p>No repositories found.</p>
+<% end %>

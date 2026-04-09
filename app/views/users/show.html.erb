@@ -1,0 +1,38 @@
+<h1><%= @user.username %>'s Profile</h1>
+
+<% if @user.avatar.attached? %>
+  <%= image_tag @user.avatar, style: "width: 80px; height: 80px; border-radius: 50%;" %>
+<% else %>
+  <div style="width: 80px; height: 80px; border-radius: 50%; background: #000;"></div>
+<% end %>
+
+<% if current_user == @user %>
+  <p><%= link_to "Edit Profile", edit_user_path(@user) %></p>
+<% end %>
+
+<h2>Repositories (<%= @pagy.count %>)</h2>
+
+<%= form_tag user_path(@user), method: :get do %>
+  <div>
+    <%= text_field_tag :q, params[:q], placeholder: "Search..." %>
+    <%= text_field_tag :tag, params[:tag], placeholder: "Tag search..." %>
+    <%= select_tag :file_type, options_for_select([["All types", ""], ["CLAUDE.md", "claude_md"], ["Skill", "skill"]], params[:file_type]) %>
+    <%= select_tag :sort, options_for_select([["Newest", "newest"], ["Oldest", "oldest"], ["Popular", "popular"]], params[:sort]) %>
+    <%= submit_tag "Search" %>
+  </div>
+<% end %>
+
+<% @repositories.each do |repo| %>
+  <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+    <h3><%= link_to repo.name, repository_path(repo) %></h3>
+    <p>
+      <strong>Type:</strong> <%= repo.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %> |
+      <strong>Visibility:</strong> <%= repo.public_repo? ? "Public" : "Private" %> |
+      <strong>Likes:</strong> <%= repo.likes_count %> |
+      <strong>Downloads:</strong> <%= repo.downloads_count %>
+    </p>
+    <p><%= truncate(repo.description, length: 150) %></p>
+  </div>
+<% end %>
+
+<%== @pagy.series_nav %>

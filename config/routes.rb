@@ -1,7 +1,17 @@
 Rails.application.routes.draw do
-  root "articles#index"
+  devise_for :users
 
-  resources :articles do
-    resources :comments
+  root "home#index"
+
+  resources :users, only: [ :show, :edit, :update ]
+
+  resources :repositories do
+    member do
+      get :download
+      post :toggle_like
+    end
   end
+
+  resources :tags, only: [ :index ]
+  resources :categories, only: [ :index ]
 end

@@ -1,0 +1,32 @@
+<h1>Edit Profile</h1>
+
+<%= form_with(model: @user) do |f| %>
+  <% if @user.errors.any? %>
+    <div>
+      <ul>
+        <% @user.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <p><%= f.label :username %></p>
+    <p><%= f.text_field :username %></p>
+  </div>
+
+  <div>
+    <p><%= f.label :avatar %></p>
+    <p><%= f.file_field :avatar, accept: "image/*" %></p>
+    <% if @user.avatar.attached? %>
+      <p>Current: <%= image_tag @user.avatar, style: "width: 40px; height: 40px;" %></p>
+    <% end %>
+  </div>
+
+  <div>
+    <%= f.submit "Update Profile" %>
+  </div>
+<% end %>
+
+<%= link_to "Back", user_path(@user) %>

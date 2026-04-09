@@ -1,0 +1,54 @@
+<h1><%= @repository.name %></h1>
+
+<p>
+  <strong>Type:</strong> <%= @repository.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %> |
+  <strong>Visibility:</strong> <%= @repository.public_repo? ? "Public" : "Private" %> |
+  <strong>By:</strong> <%= link_to @repository.user.username, user_path(@repository.user) %> |
+  <strong>Likes:</strong> <%= @repository.likes_count %> |
+  <strong>Downloads:</strong> <%= @repository.downloads_count %> |
+  <strong>Created:</strong> <%= @repository.created_at.strftime("%Y-%m-%d") %>
+</p>
+
+<% if @repository.categories.any? %>
+  <p><strong>Categories:</strong> <%= @repository.categories.pluck(:name).join(", ") %></p>
+<% end %>
+
+<% if @repository.tags.any? %>
+  <p><strong>Tags:</strong> <%= @repository.tags.pluck(:name).join(", ") %></p>
+<% end %>
+
+<% if @repository.description.present? %>
+  <h3>Description</h3>
+  <p><%= simple_format(@repository.description) %></p>
+<% end %>
+
+<% if @repository.file.attached? %>
+  <h3>File Content</h3>
+  <pre><%= @repository.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?") %></pre>
+
+  <p>
+    <%= link_to "Download", download_repository_path(@repository) %>
+  </p>
+<% end %>
+
+<% if user_signed_in? %>
+  <p>
+    <% if @repository.liked_by?(current_user) %>
+      <%= button_to "Unlike", toggle_like_repository_path(@repository), method: :post %>
+    <% else %>
+      <%= button_to "Like", toggle_like_repository_path(@repository), method: :post %>
+    <% end %>
+  </p>
+<% end %>
+
+<% if user_signed_in? && @repository.user == current_user %>
+  <p>
+    <%= link_to "Edit", edit_repository_path(@repository) %> |
+    <%= form_with(url: repository_path(@repository), method: :delete, style: "display: inline") do |f| %>
+      <%= f.password_field :password, placeholder: "Enter password to delete" %>
+      <%= f.submit "Delete", data: { turbo_confirm: "Are you sure?" } %>
+    <% end %>
+  </p>
+<% end %>
+
+<%= link_to "Back", root_path %>

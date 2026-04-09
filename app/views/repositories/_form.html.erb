@@ -1,0 +1,55 @@
+<%= form_with(model: repository) do |f| %>
+  <% if repository.errors.any? %>
+    <div>
+      <h2><%= pluralize(repository.errors.count, "error") %> prohibited this repository from being saved:</h2>
+      <ul>
+        <% repository.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <p><%= f.label :file, "File (.md)" %></p>
+    <p><%= f.file_field :file, accept: ".md" %></p>
+    <% if repository.file.attached? %>
+      <p>Current file: <%= repository.file.filename %></p>
+    <% end %>
+    <p><em>CLAUDE.md files are auto-detected. Other .md files are treated as Skills.</em></p>
+  </div>
+
+  <div>
+    <p><%= f.label :name, "Repository Name (optional, defaults to filename)" %></p>
+    <p><%= f.text_field :name %></p>
+  </div>
+
+  <div>
+    <p><%= f.label :description, "Description" %></p>
+    <p><%= f.text_area :description, rows: 5 %></p>
+  </div>
+
+  <div>
+    <p><%= f.label :visibility %></p>
+    <p><%= f.select :visibility, Repository.visibilities.keys.map { |v| [v == "public_repo" ? "Public" : "Private", v] } %></p>
+  </div>
+
+  <div>
+    <p><label>Categories</label></p>
+    <% @categories.each do |category| %>
+      <label>
+        <%= check_box_tag "repository[category_ids][]", category.id, repository.category_ids.include?(category.id) %>
+        <%= category.name %>
+      </label>
+    <% end %>
+  </div>
+
+  <div>
+    <p><label for="tag_names">Tags (comma separated)</label></p>
+    <p><%= text_field_tag :tag_names, repository.tags.pluck(:name).join(", "), placeholder: "e.g. rails, api, testing" %></p>
+  </div>
+
+  <div>
+    <%= f.submit %>
+  </div>
+<% end %>
