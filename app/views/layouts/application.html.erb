@@ -12,10 +12,11 @@
     <%= yield :head %>
 
     <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "highlight", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "markdown", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
@@ -25,6 +26,7 @@
       <% if user_signed_in? %>
         <%= link_to current_user.username, user_path(current_user) %> |
         <%= link_to "Upload", new_repository_path %> |
+        <%= link_to "New Preset", new_preset_path %> |
         <%= link_to "Sign out", destroy_user_session_path, data: { turbo_method: :delete } %>
       <% else %>
         <%= link_to "Sign in", new_user_session_path %> |

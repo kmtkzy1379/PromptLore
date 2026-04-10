@@ -36,3 +36,26 @@
 <% end %>
 
 <%== @pagy.series_nav %>
+
+<hr>
+
+<h2>Presets (<%= @pagy_presets.count %>)</h2>
+
+<% @presets.each do |preset| %>
+  <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+    <h3>
+      <%= link_to preset.name, preset_path(preset) %>
+      <% if preset.official? %>
+        <span style="background: #28a745; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 12px;">Official</span>
+      <% end %>
+    </h3>
+    <p>
+      <strong>Visibility:</strong> <%= preset.public_preset? ? "Public" : "Private" %> |
+      <strong>Likes:</strong> <%= preset.likes_count %> |
+      <strong>Downloads:</strong> <%= preset.downloads_count %>
+    </p>
+    <p><%= truncate(preset.description, length: 150) %></p>
+  </div>
+<% end %>
+
+<%== @pagy_presets.series_nav %>

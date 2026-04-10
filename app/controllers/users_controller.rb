@@ -30,7 +30,11 @@ class UsersController < ApplicationController
       repositories = repositories.order(created_at: :desc)
     end
 
-    @pagy, @repositories = pagy(repositories.includes(:categories, :tags), items: 20)
+    @pagy, @repositories = pagy(repositories.includes(:categories, :tags), items: 20, page_param: :repos_page)
+
+    presets = @user.presets
+    presets = presets.public_preset unless current_user == @user
+    @pagy_presets, @presets = pagy(presets.includes(:categories, :tags).order(created_at: :desc), items: 20, page_param: :presets_page)
   end
 
   def edit

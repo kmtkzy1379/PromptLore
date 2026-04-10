@@ -12,6 +12,14 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :presets do
+    member do
+      get :download
+      get :download_item
+      post :toggle_like
+    end
+  end
+
   resources :tags, only: [ :index ]
   resources :categories, only: [ :index ]
 end

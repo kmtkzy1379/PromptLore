@@ -44,6 +44,12 @@ gem "image_processing", "~> 1.2"
 gem "devise"
 # Pagination [https://github.com/ddnexus/pagy]
 gem "pagy"
+# ZIP file generation [https://github.com/rubyzip/rubyzip]
+gem "rubyzip", require: "zip"
+# Markdown rendering [https://github.com/vmg/redcarpet]
+gem "redcarpet"
+# Syntax highlighting [https://github.com/rouge-ruby/rouge]
+gem "rouge"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

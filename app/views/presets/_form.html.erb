@@ -1,0 +1,105 @@
+<%= form_with(model: preset) do |f| %>
+  <% if preset.errors.any? %>
+    <div>
+      <h2><%= pluralize(preset.errors.count, "error") %> prohibited this preset from being saved:</h2>
+      <ul>
+        <% preset.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <p><%= f.label :name, "Preset Name" %></p>
+    <p><%= f.text_field :name %></p>
+  </div>
+
+  <div>
+    <p><%= f.label :description, "Description" %></p>
+    <p><%= f.text_area :description, rows: 5 %></p>
+  </div>
+
+  <div>
+    <p><%= f.label :visibility %></p>
+    <p><%= f.select :visibility, Preset.visibilities.keys.map { |v| [v == "public_preset" ? "Public" : "Private", v] } %></p>
+  </div>
+
+  <% if current_user&.admin? %>
+    <div>
+      <label>
+        <%= f.check_box :official %>
+        Mark as Official
+      </label>
+    </div>
+  <% end %>
+
+  <fieldset>
+    <legend>Include existing repositories</legend>
+    <% if @user_repositories.any? %>
+      <% selected_repo_ids = preset.persisted? ? preset.preset_repositories.pluck(:repository_id) : [] %>
+      <% @user_repositories.each do |repo| %>
+        <label style="display: block; margin: 3px 0;">
+          <%= check_box_tag "repository_ids[]", repo.id, selected_repo_ids.include?(repo.id) %>
+          <%= repo.name %> (<%= repo.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %>)
+        </label>
+      <% end %>
+    <% else %>
+      <p><em>No repositories yet. You can upload files below.</em></p>
+    <% end %>
+  </fieldset>
+
+  <fieldset data-controller="nested-fields">
+    <legend>Upload new files (.md)</legend>
+
+    <div data-nested-fields-target="container">
+      <%= f.fields_for :preset_items do |item_f| %>
+        <div class="preset-item-fields" style="border: 1px solid #eee; padding: 8px; margin: 5px 0;">
+          <% if item_f.object.persisted? && item_f.object.file.attached? %>
+            <p>Current: <%= item_f.object.file.filename %></p>
+          <% end %>
+          <%= item_f.file_field :file, accept: ".md" %>
+          <%= item_f.hidden_field :position, value: item_f.index %>
+          <% if item_f.object.persisted? %>
+            <label>
+              <%= item_f.check_box :_destroy %>
+              Remove
+            </label>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <template data-nested-fields-target="template">
+      <div class="preset-item-fields" style="border: 1px solid #eee; padding: 8px; margin: 5px 0;">
+        <%= f.fields_for :preset_items, PresetItem.new, child_index: "NEW_RECORD" do |item_f| %>
+          <%= item_f.file_field :file, accept: ".md" %>
+          <%= item_f.hidden_field :position, value: 0 %>
+        <% end %>
+      </div>
+    </template>
+
+    <p>
+      <button type="button" data-action="nested-fields#add">+ Add another file</button>
+    </p>
+  </fieldset>
+
+  <div>
+    <p><label>Categories</label></p>
+    <% @categories.each do |category| %>
+      <label>
+        <%= check_box_tag "preset[category_ids][]", category.id, preset.category_ids.include?(category.id) %>
+        <%= category.name %>
+      </label>
+    <% end %>
+  </div>
+
+  <div>
+    <p><label for="tag_names">Tags (comma separated)</label></p>
+    <p><%= text_field_tag :tag_names, preset.tags.pluck(:name).join(", "), placeholder: "e.g. rails, api, testing" %></p>
+  </div>
+
+  <div>
+    <%= f.submit %>
+  </div>
+<% end %>

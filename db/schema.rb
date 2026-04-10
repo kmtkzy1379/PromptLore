@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_09_121050) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_10_030353) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -56,6 +56,71 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_121050) do
     t.index ["user_id"], name: "index_likes_on_user_id"
   end
 
+  create_table "preset_categories", force: :cascade do |t|
+    t.integer "category_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "preset_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_preset_categories_on_category_id"
+    t.index ["preset_id", "category_id"], name: "index_preset_categories_on_preset_id_and_category_id", unique: true
+    t.index ["preset_id"], name: "index_preset_categories_on_preset_id"
+  end
+
+  create_table "preset_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "file_type", default: 0, null: false
+    t.integer "position", default: 0, null: false
+    t.integer "preset_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["preset_id"], name: "index_preset_items_on_preset_id"
+  end
+
+  create_table "preset_likes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "preset_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["preset_id"], name: "index_preset_likes_on_preset_id"
+    t.index ["user_id", "preset_id"], name: "index_preset_likes_on_user_id_and_preset_id", unique: true
+    t.index ["user_id"], name: "index_preset_likes_on_user_id"
+  end
+
+  create_table "preset_repositories", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "position", default: 0, null: false
+    t.integer "preset_id", null: false
+    t.integer "repository_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["preset_id", "repository_id"], name: "index_preset_repositories_on_preset_id_and_repository_id", unique: true
+    t.index ["preset_id"], name: "index_preset_repositories_on_preset_id"
+    t.index ["repository_id"], name: "index_preset_repositories_on_repository_id"
+  end
+
+  create_table "preset_tags", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "preset_id", null: false
+    t.integer "tag_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["preset_id", "tag_id"], name: "index_preset_tags_on_preset_id_and_tag_id", unique: true
+    t.index ["preset_id"], name: "index_preset_tags_on_preset_id"
+    t.index ["tag_id"], name: "index_preset_tags_on_tag_id"
+  end
+
+  create_table "presets", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "downloads_count", default: 0, null: false
+    t.integer "likes_count", default: 0, null: false
+    t.string "name", null: false
+    t.boolean "official", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "visibility", default: 0, null: false
+    t.index ["official"], name: "index_presets_on_official"
+    t.index ["user_id"], name: "index_presets_on_user_id"
+    t.index ["visibility"], name: "index_presets_on_visibility"
+  end
+
   create_table "repositories", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -99,6 +164,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_121050) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.boolean "admin", default: false, null: false
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -116,6 +182,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_121050) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "likes", "repositories"
   add_foreign_key "likes", "users"
+  add_foreign_key "preset_categories", "categories"
+  add_foreign_key "preset_categories", "presets"
+  add_foreign_key "preset_items", "presets"
+  add_foreign_key "preset_likes", "presets"
+  add_foreign_key "preset_likes", "users"
+  add_foreign_key "preset_repositories", "presets"
+  add_foreign_key "preset_repositories", "repositories"
+  add_foreign_key "preset_tags", "presets"
+  add_foreign_key "preset_tags", "tags"
+  add_foreign_key "presets", "users"
   add_foreign_key "repositories", "users"
   add_foreign_key "repository_categories", "categories"
   add_foreign_key "repository_categories", "repositories"

@@ -16,3 +16,12 @@ categories.each do |name|
 end
 
 puts "Created #{Category.count} categories"
+
+# Admin user
+admin = User.find_by(email: "kmt.ps037@gmail.com")
+if admin
+  admin.update!(admin: true)
+  puts "Admin set: #{admin.email}"
+else
+  puts "Warning: kmt.ps037@gmail.com not found. Sign up first, then run seeds again."
+end

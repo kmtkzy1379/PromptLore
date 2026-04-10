@@ -1,0 +1,98 @@
+<h1>
+  <%= @preset.name %>
+  <% if @preset.official? %>
+    <span style="background: #28a745; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 14px;">Official</span>
+  <% end %>
+</h1>
+
+<p>
+  <strong>By:</strong> <%= link_to @preset.user.username, user_path(@preset.user) %> |
+  <strong>Visibility:</strong> <%= @preset.public_preset? ? "Public" : "Private" %> |
+  <strong>Likes:</strong> <%= @preset.likes_count %> |
+  <strong>Downloads:</strong> <%= @preset.downloads_count %>
+</p>
+
+<% if @preset.description.present? %>
+  <p><%= simple_format(@preset.description) %></p>
+<% end %>
+
+<% if @preset.categories.any? %>
+  <p><strong>Categories:</strong> <%= @preset.categories.pluck(:name).join(", ") %></p>
+<% end %>
+
+<% if @preset.tags.any? %>
+  <p><strong>Tags:</strong> <%= @preset.tags.pluck(:name).join(", ") %></p>
+<% end %>
+
+<hr>
+
+<h2>Files</h2>
+
+<% if @preset.preset_items.any? %>
+  <h3>Uploaded Files</h3>
+  <% @preset.preset_items.order(:position).each do |item| %>
+    <% if item.file.attached? %>
+      <details open style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
+        <summary>
+          <strong><%= item.file.filename %></strong>
+          (<%= item.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %>)
+          &mdash;
+          <%= link_to "Download", download_item_preset_path(@preset, item_type: "preset_item", item_id: item.id) %>
+        </summary>
+        <div class="markdown-body" style="margin-top: 10px;">
+          <%= render_markdown(item.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")) %>
+        </div>
+      </details>
+    <% end %>
+  <% end %>
+<% end %>
+
+<% if @preset.preset_repositories.any? %>
+  <h3>Included Repositories</h3>
+  <% @preset.preset_repositories.includes(:repository).order(:position).each do |pr| %>
+    <details open style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
+      <summary>
+        <strong><%= link_to pr.repository.name, repository_path(pr.repository) %></strong>
+        (<%= pr.repository.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %>)
+        <% if pr.repository.file.attached? %>
+          &mdash;
+          <%= link_to "Download", download_item_preset_path(@preset, item_type: "repository", item_id: pr.repository.id) %>
+        <% end %>
+      </summary>
+      <% if pr.repository.file.attached? %>
+        <div class="markdown-body" style="margin-top: 10px;">
+          <%= render_markdown(pr.repository.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")) %>
+        </div>
+      <% end %>
+    </details>
+  <% end %>
+<% end %>
+
+<hr>
+
+<div>
+  <% files = @preset.all_files %>
+  <% if files.any? %>
+    <%= link_to "Download All (ZIP)", download_preset_path(@preset), style: "font-weight: bold;" %>
+  <% end %>
+</div>
+
+<div style="margin-top: 10px;">
+  <% if user_signed_in? %>
+    <% if @preset.liked_by?(current_user) %>
+      <%= button_to "Unlike", toggle_like_preset_path(@preset), style: "display: inline;" %>
+    <% else %>
+      <%= button_to "Like", toggle_like_preset_path(@preset), style: "display: inline;" %>
+    <% end %>
+  <% end %>
+</div>
+
+<% if user_signed_in? && @preset.user == current_user %>
+  <div style="margin-top: 20px;">
+    <%= link_to "Edit", edit_preset_path(@preset) %> |
+    <%= form_with(url: preset_path(@preset), method: :delete, style: "display: inline;") do |f| %>
+      <%= f.password_field :password, placeholder: "Enter password to delete" %>
+      <%= f.submit "Delete", data: { turbo_confirm: "Are you sure?" } %>
+    <% end %>
+  </div>
+<% end %>
