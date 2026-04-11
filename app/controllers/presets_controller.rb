@@ -1,7 +1,7 @@
 class PresetsController < ApplicationController
-  before_action :authenticate_user!, except: [ :index, :show, :download, :download_item ]
-  before_action :set_preset, only: [ :show, :edit, :update, :destroy, :download, :download_item, :toggle_like ]
-  before_action :check_visibility!, only: [ :show, :download, :download_item, :toggle_like ]
+  before_action :authenticate_user!, except: [ :index, :show, :download, :download_item, :raw_content ]
+  before_action :set_preset, only: [ :show, :edit, :update, :destroy, :download, :download_item, :raw_content, :toggle_like ]
+  before_action :check_visibility!, only: [ :show, :download, :download_item, :raw_content, :toggle_like ]
   before_action :authorize_owner!, only: [ :edit, :update, :destroy ]
 
   def index
@@ -107,6 +107,27 @@ class PresetsController < ApplicationController
     else
       redirect_to @preset, alert: "Invalid item type."
     end
+  end
+
+  def raw_content
+    files = []
+    @preset.preset_items.order(:position).each do |item|
+      next unless item.file.attached?
+      files << {
+        filename: item.file.filename.to_s,
+        file_type: item.file_type,
+        content: item.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")
+      }
+    end
+    @preset.preset_repositories.includes(repository: { file_attachment: :blob }).order(:position).each do |pr|
+      next unless pr.repository.file.attached?
+      files << {
+        filename: pr.repository.file.filename.to_s,
+        file_type: pr.repository.file_type,
+        content: pr.repository.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")
+      }
+    end
+    render json: { name: @preset.name, files: files }
   end
 
   def toggle_like

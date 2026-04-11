@@ -77,6 +77,10 @@
   <% end %>
 </div>
 
+<%= render "shared/install_actions",
+     raw_content_url: raw_content_preset_path(@preset),
+     resource_type: "preset" %>
+
 <div style="margin-top: 10px;">
   <% if user_signed_in? %>
     <% if @preset.liked_by?(current_user) %>

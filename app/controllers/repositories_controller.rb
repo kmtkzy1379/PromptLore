@@ -1,7 +1,7 @@
 class RepositoriesController < ApplicationController
-  before_action :authenticate_user!, except: [ :index, :show, :download ]
-  before_action :set_repository, only: [ :show, :edit, :update, :destroy, :download, :toggle_like ]
-  before_action :check_visibility!, only: [ :show, :download, :toggle_like ]
+  before_action :authenticate_user!, except: [ :index, :show, :download, :raw_content ]
+  before_action :set_repository, only: [ :show, :edit, :update, :destroy, :download, :raw_content, :toggle_like ]
+  before_action :check_visibility!, only: [ :show, :download, :raw_content, :toggle_like ]
   before_action :authorize_owner!, only: [ :edit, :update, :destroy ]
 
   def index
@@ -69,6 +69,20 @@ class RepositoriesController < ApplicationController
       redirect_to rails_blob_path(@repository.file, disposition: "attachment")
     else
       redirect_to @repository, alert: "No file attached."
+    end
+  end
+
+  def raw_content
+    if @repository.file.attached?
+      content = @repository.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")
+      render json: {
+        filename: @repository.file.filename.to_s,
+        file_type: @repository.file_type,
+        name: @repository.name,
+        content: content
+      }
+    else
+      render json: { error: "No file attached" }, status: :not_found
     end
   end
 

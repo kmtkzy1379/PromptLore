@@ -1,0 +1,101 @@
+<div data-controller="install"
+     data-install-url-value="<%= raw_content_url %>"
+     data-install-type-value="<%= resource_type %>"
+     style="margin: 15px 0;">
+
+  <details style="border: 1px solid #ddd; padding: 10px; margin: 8px 0; border-radius: 6px;">
+    <summary style="cursor: pointer; font-weight: bold; font-size: 1.05em;">
+      Claude Code にインストール
+    </summary>
+    <div style="padding: 10px 5px;">
+      <p style="margin: 0 0 8px; color: #555;">どこで使う？</p>
+      <ul style="list-style: none; padding: 0; margin: 0;">
+        <li style="margin-bottom: 12px;">
+          <button data-action="click->install#installWeb"
+                  style="padding: 6px 14px; cursor: pointer; border: 1px solid #0969da; background: #fff; color: #0969da; border-radius: 4px;">
+            Web で使う
+          </button>
+          <span style="color: #666; font-size: 0.85em; margin-left: 4px;">（クリップボードにコピー）</span>
+          <div data-install-target="installWebGuide" style="display: none; margin-top: 8px; padding: 10px; background: #f0f8ff; border-radius: 4px; font-size: 0.9em;">
+            <strong>Copied!</strong> 次のステップ:
+            <ol style="margin: 5px 0 0; padding-left: 20px;">
+              <li>claude.ai/code を開く</li>
+              <li>プロジェクトの設定画面を開く</li>
+              <li>「CLAUDE.md」欄にコピーした内容を貼り付けて保存</li>
+            </ol>
+          </div>
+        </li>
+        <li>
+          <span style="color: #333;">ローカルで使う:</span>
+          <div style="margin-top: 5px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button data-action="click->install#installLocalBash"
+                    style="padding: 6px 14px; cursor: pointer; border: 1px solid #2da44e; background: #fff; color: #2da44e; border-radius: 4px;">
+              Bash コマンドをコピー
+            </button>
+            <button data-action="click->install#installLocalPowershell"
+                    style="padding: 6px 14px; cursor: pointer; border: 1px solid #6639ba; background: #fff; color: #6639ba; border-radius: 4px;">
+              PowerShell コマンドをコピー
+            </button>
+          </div>
+          <div data-install-target="installBashGuide" style="display: none; margin-top: 8px; padding: 10px; background: #f0fff0; border-radius: 4px; font-size: 0.9em;">
+            <strong>Copied!</strong> 次のステップ:
+            <ol style="margin: 5px 0 0; padding-left: 20px;">
+              <li>ターミナル（Terminal / コマンドプロンプト）を開く</li>
+              <li>Claude Code を使いたいプロジェクトのフォルダに移動</li>
+              <li>コピーしたコマンドを貼り付けて Enter キーを押す</li>
+            </ol>
+          </div>
+          <div data-install-target="installPsGuide" style="display: none; margin-top: 8px; padding: 10px; background: #f5f0ff; border-radius: 4px; font-size: 0.9em;">
+            <strong>Copied!</strong> 次のステップ:
+            <ol style="margin: 5px 0 0; padding-left: 20px;">
+              <li>PowerShell を開く</li>
+              <li>Claude Code を使いたいプロジェクトのフォルダに移動（cd フォルダ名）</li>
+              <li>コピーしたコマンドを貼り付けて Enter キーを押す</li>
+            </ol>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </details>
+
+  <details style="border: 1px solid #ddd; padding: 10px; margin: 8px 0; border-radius: 6px;">
+    <summary style="cursor: pointer; font-weight: bold; font-size: 1.05em;">
+      DL せずに使用する
+    </summary>
+    <div style="padding: 10px 5px;">
+      <p style="margin: 0 0 8px; color: #555;">どこで使う？</p>
+      <ul style="list-style: none; padding: 0; margin: 0;">
+        <li style="margin-bottom: 12px;">
+          <button data-action="click->install#useWeb"
+                  style="padding: 6px 14px; cursor: pointer; border: 1px solid #0969da; background: #fff; color: #0969da; border-radius: 4px;">
+            Web で使う
+          </button>
+          <span style="color: #666; font-size: 0.85em; margin-left: 4px;">（セッションプロンプトとしてコピー）</span>
+          <div data-install-target="useWebGuide" style="display: none; margin-top: 8px; padding: 10px; background: #f0f8ff; border-radius: 4px; font-size: 0.9em;">
+            <strong>Copied!</strong> 次のステップ:
+            <ol style="margin: 5px 0 0; padding-left: 20px;">
+              <li>claude.ai/code を開く（または既に開いているチャットに移動）</li>
+              <li>メッセージ入力欄にコピーした内容を貼り付け</li>
+              <li>送信すると、Claude がこの設定に従って動作します</li>
+            </ol>
+          </div>
+        </li>
+        <li>
+          <button data-action="click->install#useLocal"
+                  style="padding: 6px 14px; cursor: pointer; border: 1px solid #2da44e; background: #fff; color: #2da44e; border-radius: 4px;">
+            ローカルで使う
+          </button>
+          <span style="color: #666; font-size: 0.85em; margin-left: 4px;">（会話に貼り付け用にコピー）</span>
+          <div data-install-target="useLocalGuide" style="display: none; margin-top: 8px; padding: 10px; background: #f0fff0; border-radius: 4px; font-size: 0.9em;">
+            <strong>Copied!</strong> 次のステップ:
+            <ol style="margin: 5px 0 0; padding-left: 20px;">
+              <li>Claude Code が動いているターミナルを開く</li>
+              <li>チャット入力にコピーした内容を貼り付けて送信</li>
+              <li>Claude がこの設定に従って動作します</li>
+            </ol>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </details>
+</div>

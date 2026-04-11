@@ -31,6 +31,10 @@
   <p>
     <%= link_to "Download", download_repository_path(@repository) %>
   </p>
+
+  <%= render "shared/install_actions",
+       raw_content_url: raw_content_repository_path(@repository),
+       resource_type: "repository" %>
 <% end %>
 
 <% if user_signed_in? %>
