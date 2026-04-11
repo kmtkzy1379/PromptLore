@@ -10,6 +10,10 @@ Rails.application.routes.draw do
       get :download
       get :raw_content
       post :toggle_like
+      post :restore
+      post :toggle_pin
+      patch :update_memo
+      get :preview_version
     end
   end
 
@@ -19,6 +23,10 @@ Rails.application.routes.draw do
       get :download_item
       get :raw_content
       post :toggle_like
+      post :restore
+      post :toggle_pin
+      patch :update_memo
+      get :preview_version
     end
   end
 

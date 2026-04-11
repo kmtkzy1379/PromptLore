@@ -7,6 +7,7 @@ class Repository < ApplicationRecord
   has_many :tags, through: :repository_tags
   has_many :likes, dependent: :destroy
   has_many :preset_repositories, dependent: :destroy
+  has_many :versions, class_name: "RepositoryVersion", dependent: :destroy
 
   has_one_attached :file
 

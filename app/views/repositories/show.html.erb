@@ -48,6 +48,13 @@
 <% end %>
 
 <% if user_signed_in? && @repository.user == current_user %>
+  <%= render "shared/version_history",
+       versions: @repository.versions.order(version_number: :desc),
+       restore_path: ->(opts) { restore_repository_path(@repository, **opts) },
+       toggle_pin_path: ->(opts) { toggle_pin_repository_path(@repository, **opts) },
+       update_memo_path: ->(opts) { update_memo_repository_path(@repository, **opts) },
+       preview_path: ->(opts) { preview_version_repository_path(@repository, **opts) } %>
+
   <p>
     <%= link_to "Edit", edit_repository_path(@repository) %> |
     <%= form_with(url: repository_path(@repository), method: :delete, style: "display: inline") do |f| %>

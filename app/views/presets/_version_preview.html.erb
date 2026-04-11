@@ -1,0 +1,45 @@
+<turbo-frame id="version-preview-<%= version.id %>">
+  <div style="border: 1px solid #eee; padding: 12px; border-radius: 4px; background: #fafafa;">
+    <table style="font-size: 13px; margin-bottom: 10px;">
+      <tr><td style="padding: 2px 10px 2px 0; color: #666;">名前:</td><td><%= version.name %></td></tr>
+      <tr><td style="padding: 2px 10px 2px 0; color: #666;">説明:</td><td><%= version.description.presence || "(なし)" %></td></tr>
+      <tr><td style="padding: 2px 10px 2px 0; color: #666;">公開設定:</td><td><%= version.visibility == 0 ? "公開" : "非公開" %></td></tr>
+      <tr><td style="padding: 2px 10px 2px 0; color: #666;">タグ:</td><td><%= version.tag_names.join(", ").presence || "(なし)" %></td></tr>
+      <tr><td style="padding: 2px 10px 2px 0; color: #666;">カテゴリ:</td><td><%= version.category_names.join(", ").presence || "(なし)" %></td></tr>
+    </table>
+
+    <% if version.preset_version_items.any? %>
+      <h4 style="margin: 10px 0 5px; font-size: 14px;">アップロードファイル (<%= version.preset_version_items.size %>件)</h4>
+      <% version.preset_version_items.order(:position).each do |item| %>
+        <% if item.file.attached? %>
+          <details style="border: 1px solid #e0e0e0; padding: 8px; margin: 4px 0; border-radius: 4px; background: #fff;">
+            <summary style="cursor: pointer; font-size: 13px;">
+              <strong><%= item.file.filename %></strong>
+              (<%= item.file_type == 0 ? "CLAUDE.md" : "Skill" %>)
+            </summary>
+            <div class="markdown-body" style="margin-top: 8px; max-height: 300px; overflow-y: auto;">
+              <%= render_markdown(item.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")) %>
+            </div>
+          </details>
+        <% end %>
+      <% end %>
+    <% end %>
+
+    <% refs = version.repository_refs || [] %>
+    <% if refs.any? %>
+      <h4 style="margin: 10px 0 5px; font-size: 14px;">含まれるリポジトリ (<%= refs.size %>件)</h4>
+      <ul style="font-size: 13px; padding-left: 20px;">
+        <% refs.each do |ref| %>
+          <% repo = Repository.find_by(id: ref["id"]) %>
+          <li>
+            <% if repo %>
+              <%= link_to repo.name, repository_path(repo) %>
+            <% else %>
+              <span style="color: #999;">削除済みリポジトリ (ID: <%= ref["id"] %>)</span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+</turbo-frame>

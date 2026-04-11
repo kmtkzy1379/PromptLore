@@ -1,0 +1,19 @@
+<turbo-frame id="version-preview-<%= version.id %>">
+  <div style="border: 1px solid #eee; padding: 12px; border-radius: 4px; background: #fafafa;">
+    <table style="font-size: 13px; margin-bottom: 10px;">
+      <tr><td style="padding: 2px 10px 2px 0; color: #666;">名前:</td><td><%= version.name %></td></tr>
+      <tr><td style="padding: 2px 10px 2px 0; color: #666;">説明:</td><td><%= version.description.presence || "(なし)" %></td></tr>
+      <tr><td style="padding: 2px 10px 2px 0; color: #666;">タイプ:</td><td><%= version.file_type == 0 ? "CLAUDE.md" : "Skill" %></td></tr>
+      <tr><td style="padding: 2px 10px 2px 0; color: #666;">公開設定:</td><td><%= version.visibility == 0 ? "公開" : "非公開" %></td></tr>
+      <tr><td style="padding: 2px 10px 2px 0; color: #666;">タグ:</td><td><%= version.tag_names.join(", ").presence || "(なし)" %></td></tr>
+      <tr><td style="padding: 2px 10px 2px 0; color: #666;">カテゴリ:</td><td><%= version.category_names.join(", ").presence || "(なし)" %></td></tr>
+    </table>
+
+    <% if version.file.attached? %>
+      <h4 style="margin: 10px 0 5px; font-size: 14px;">ファイル内容</h4>
+      <div class="markdown-body" style="max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 10px; border-radius: 4px; background: #fff;">
+        <%= render_markdown(version.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")) %>
+      </div>
+    <% end %>
+  </div>
+</turbo-frame>

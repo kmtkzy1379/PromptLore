@@ -1,0 +1,71 @@
+<% if versions.any? %>
+  <section style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
+    <h3>バージョン履歴</h3>
+    <p style="color: #666; font-size: 14px;">
+      更新時に自動保存されます（最大5件 + ピン留め3件）
+    </p>
+
+    <% versions.each do |version| %>
+      <div style="border: 1px solid <%= version.pinned? ? '#f0c040' : '#e0e0e0' %>; padding: 12px; margin: 8px 0; border-radius: 6px; <%= 'background: #fffdf0;' if version.pinned? %>">
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <strong>v<%= version.version_number %></strong>
+            &mdash; <%= version.name %>
+            <span style="color: #888; font-size: 13px;">
+              (<%= version.created_at.strftime("%Y-%m-%d %H:%M") %>)
+            </span>
+            <% if version.pinned? %>
+              <span style="background: #f0c040; color: #333; padding: 1px 6px; border-radius: 3px; font-size: 12px; margin-left: 4px;">ピン留め中</span>
+            <% end %>
+          </div>
+
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <%= button_to version.pinned? ? "ピン解除" : "ピン留め",
+                  toggle_pin_path.call(version_id: version.id),
+                  method: :post,
+                  style: "padding: 4px 10px; cursor: pointer; border: 1px solid #{version.pinned? ? '#c0a030' : '#888'}; background: #fff; color: #{version.pinned? ? '#c0a030' : '#555'}; border-radius: 4px; font-size: 13px;" %>
+            <%= button_to "この版に復元",
+                  restore_path.call(version_id: version.id),
+                  method: :post,
+                  data: { turbo_confirm: "v#{version.version_number} に復元しますか？\n現在の内容はバージョン履歴に保存されます。" },
+                  style: "padding: 4px 10px; cursor: pointer; border: 1px solid #0969da; background: #fff; color: #0969da; border-radius: 4px; font-size: 13px;" %>
+          </div>
+        </div>
+
+        <%# Memo section %>
+        <div data-controller="version-memo" style="margin-top: 6px;">
+          <div data-version-memo-target="display">
+            <% if version.memo.present? %>
+              <span style="color: #555; font-size: 13px;">メモ: 「<%= version.memo %>」</span>
+            <% end %>
+            <button data-action="click->version-memo#edit"
+                    style="padding: 2px 8px; cursor: pointer; border: 1px solid #ccc; background: #f8f8f8; color: #666; border-radius: 3px; font-size: 12px;">
+              <%= version.memo.present? ? "メモ編集" : "メモ追加" %>
+            </button>
+          </div>
+          <div data-version-memo-target="form" style="display: none; margin-top: 4px;">
+            <%= form_with url: update_memo_path.call(version_id: version.id), method: :patch, style: "display: flex; gap: 6px; align-items: center;" do |f| %>
+              <%= f.text_field :memo, value: version.memo, placeholder: "バージョンのメモ（例: 完成版、テスト用）", style: "padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; flex: 1; min-width: 200px;" %>
+              <%= f.submit "保存", style: "padding: 4px 10px; cursor: pointer; border: 1px solid #2da44e; background: #2da44e; color: #fff; border-radius: 4px; font-size: 13px;" %>
+              <button type="button" data-action="click->version-memo#cancel"
+                      style="padding: 4px 10px; cursor: pointer; border: 1px solid #ccc; background: #f8f8f8; color: #666; border-radius: 4px; font-size: 13px;">
+                キャンセル
+              </button>
+            <% end %>
+          </div>
+        </div>
+
+        <%# Preview toggle %>
+        <details style="margin-top: 8px;">
+          <summary style="cursor: pointer; color: #0066cc; font-size: 14px;">内容を確認</summary>
+          <div style="margin-top: 8px;">
+            <turbo-frame id="version-preview-<%= version.id %>" src="<%= preview_path.call(version_id: version.id) %>" loading="lazy">
+              <p style="color: #888; font-size: 13px;">読み込み中...</p>
+            </turbo-frame>
+          </div>
+        </details>
+      </div>
+    <% end %>
+  </section>
+<% end %>

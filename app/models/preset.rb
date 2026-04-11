@@ -9,6 +9,7 @@ class Preset < ApplicationRecord
   has_many :preset_tags, dependent: :destroy
   has_many :tags, through: :preset_tags
   has_many :preset_likes, dependent: :destroy
+  has_many :versions, class_name: "PresetVersion", dependent: :destroy
 
   enum :visibility, { public_preset: 0, private_preset: 1 }
 

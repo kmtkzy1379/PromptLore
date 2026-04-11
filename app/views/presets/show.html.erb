@@ -92,6 +92,13 @@
 </div>
 
 <% if user_signed_in? && @preset.user == current_user %>
+  <%= render "shared/version_history",
+       versions: @preset.versions.order(version_number: :desc),
+       restore_path: ->(opts) { restore_preset_path(@preset, **opts) },
+       toggle_pin_path: ->(opts) { toggle_pin_preset_path(@preset, **opts) },
+       update_memo_path: ->(opts) { update_memo_preset_path(@preset, **opts) },
+       preview_path: ->(opts) { preview_version_preset_path(@preset, **opts) } %>
+
   <div style="margin-top: 20px;">
     <%= link_to "Edit", edit_preset_path(@preset) %> |
     <%= form_with(url: preset_path(@preset), method: :delete, style: "display: inline;") do |f| %>

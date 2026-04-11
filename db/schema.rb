@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_10_030353) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_11_035120) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -106,6 +106,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_030353) do
     t.index ["tag_id"], name: "index_preset_tags_on_tag_id"
   end
 
+  create_table "preset_version_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "file_type", default: 0, null: false
+    t.integer "position", default: 0, null: false
+    t.integer "preset_version_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["preset_version_id"], name: "index_preset_version_items_on_preset_version_id"
+  end
+
+  create_table "preset_versions", force: :cascade do |t|
+    t.json "category_names", default: []
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "memo"
+    t.string "name", null: false
+    t.boolean "official", default: false, null: false
+    t.boolean "pinned", default: false, null: false
+    t.integer "preset_id", null: false
+    t.json "repository_refs", default: []
+    t.json "tag_names", default: []
+    t.datetime "updated_at", null: false
+    t.integer "version_number", null: false
+    t.integer "visibility", default: 0, null: false
+    t.index ["preset_id", "version_number"], name: "index_preset_versions_on_preset_id_and_version_number", unique: true
+    t.index ["preset_id"], name: "index_preset_versions_on_preset_id"
+  end
+
   create_table "presets", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -156,6 +183,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_030353) do
     t.index ["tag_id"], name: "index_repository_tags_on_tag_id"
   end
 
+  create_table "repository_versions", force: :cascade do |t|
+    t.json "category_names", default: []
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "file_type", default: 0, null: false
+    t.string "memo"
+    t.string "name", null: false
+    t.boolean "pinned", default: false, null: false
+    t.integer "repository_id", null: false
+    t.json "tag_names", default: []
+    t.datetime "updated_at", null: false
+    t.integer "version_number", null: false
+    t.integer "visibility", default: 0, null: false
+    t.index ["repository_id", "version_number"], name: "index_repository_versions_on_repository_id_and_version_number", unique: true
+    t.index ["repository_id"], name: "index_repository_versions_on_repository_id"
+  end
+
   create_table "tags", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -191,10 +235,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_030353) do
   add_foreign_key "preset_repositories", "repositories"
   add_foreign_key "preset_tags", "presets"
   add_foreign_key "preset_tags", "tags"
+  add_foreign_key "preset_version_items", "preset_versions"
+  add_foreign_key "preset_versions", "presets"
   add_foreign_key "presets", "users"
   add_foreign_key "repositories", "users"
   add_foreign_key "repository_categories", "categories"
   add_foreign_key "repository_categories", "repositories"
   add_foreign_key "repository_tags", "repositories"
   add_foreign_key "repository_tags", "tags"
+  add_foreign_key "repository_versions", "repositories"
 end

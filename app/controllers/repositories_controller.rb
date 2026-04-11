@@ -1,8 +1,8 @@
 class RepositoriesController < ApplicationController
   before_action :authenticate_user!, except: [ :index, :show, :download, :raw_content ]
-  before_action :set_repository, only: [ :show, :edit, :update, :destroy, :download, :raw_content, :toggle_like ]
+  before_action :set_repository, only: [ :show, :edit, :update, :destroy, :download, :raw_content, :toggle_like, :restore, :toggle_pin, :update_memo, :preview_version ]
   before_action :check_visibility!, only: [ :show, :download, :raw_content, :toggle_like ]
-  before_action :authorize_owner!, only: [ :edit, :update, :destroy ]
+  before_action :authorize_owner!, only: [ :edit, :update, :destroy, :restore, :toggle_pin, :update_memo, :preview_version ]
 
   def index
     repositories = Repository.public_repo.includes(:user, :categories, :tags).order(created_at: :desc)
@@ -36,11 +36,21 @@ class RepositoriesController < ApplicationController
   end
 
   def update
-    @repository.assign_attributes(repository_params)
-    detect_file_type if @repository.file.attached?
+    update_succeeded = false
+    ActiveRecord::Base.transaction do
+      ::RepositoryVersionService.new.create_version!(@repository)
+      @repository.assign_attributes(repository_params)
+      detect_file_type if @repository.file.attached?
 
-    if @repository.save
-      update_tags
+      if @repository.save
+        update_tags
+        update_succeeded = true
+      else
+        raise ActiveRecord::Rollback
+      end
+    end
+
+    if update_succeeded
       redirect_to @repository, notice: "Repository was successfully updated."
     else
       @categories = Category.all
@@ -84,6 +94,38 @@ class RepositoriesController < ApplicationController
     else
       render json: { error: "No file attached" }, status: :not_found
     end
+  end
+
+  def restore
+    version = @repository.versions.find(params[:version_id])
+    ::RepositoryVersionService.new.restore_version!(@repository, version)
+    redirect_to @repository, notice: "v#{version.version_number} に復元しました。"
+  end
+
+  def toggle_pin
+    version = @repository.versions.find(params[:version_id])
+    service = ::RepositoryVersionService.new
+    if version.pinned?
+      service.toggle_pin!(version)
+      redirect_to @repository, notice: "ピン留めを解除しました。"
+    else
+      if service.toggle_pin!(version)
+        redirect_to @repository, notice: "v#{version.version_number} をピン留めしました。"
+      else
+        redirect_to @repository, alert: "ピン留めは最大3件までです。既存のピンを外してください。"
+      end
+    end
+  end
+
+  def update_memo
+    version = @repository.versions.find(params[:version_id])
+    ::RepositoryVersionService.new.update_memo!(version, params[:memo].to_s.strip)
+    redirect_to @repository, notice: "メモを更新しました。"
+  end
+
+  def preview_version
+    @version = @repository.versions.find(params[:version_id])
+    render partial: "repositories/version_preview", locals: { version: @version }, layout: false
   end
 
   def toggle_like

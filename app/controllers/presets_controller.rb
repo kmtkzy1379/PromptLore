@@ -1,8 +1,8 @@
 class PresetsController < ApplicationController
   before_action :authenticate_user!, except: [ :index, :show, :download, :download_item, :raw_content ]
-  before_action :set_preset, only: [ :show, :edit, :update, :destroy, :download, :download_item, :raw_content, :toggle_like ]
+  before_action :set_preset, only: [ :show, :edit, :update, :destroy, :download, :download_item, :raw_content, :toggle_like, :restore, :toggle_pin, :update_memo, :preview_version ]
   before_action :check_visibility!, only: [ :show, :download, :download_item, :raw_content, :toggle_like ]
-  before_action :authorize_owner!, only: [ :edit, :update, :destroy ]
+  before_action :authorize_owner!, only: [ :edit, :update, :destroy, :restore, :toggle_pin, :update_memo, :preview_version ]
 
   def index
     presets = Preset.public_preset.includes(:user, :categories, :tags)
@@ -43,13 +43,23 @@ class PresetsController < ApplicationController
   end
 
   def update
-    @preset.assign_attributes(preset_params)
-    strip_official_unless_admin
-    detect_file_types
+    update_succeeded = false
+    ActiveRecord::Base.transaction do
+      ::PresetVersionService.new.create_version!(@preset)
+      @preset.assign_attributes(preset_params)
+      strip_official_unless_admin
+      detect_file_types
 
-    if @preset.save
-      attach_repositories
-      update_tags
+      if @preset.save
+        attach_repositories
+        update_tags
+        update_succeeded = true
+      else
+        raise ActiveRecord::Rollback
+      end
+    end
+
+    if update_succeeded
       redirect_to @preset, notice: "Preset was successfully updated."
     else
       @categories = Category.all
@@ -128,6 +138,42 @@ class PresetsController < ApplicationController
       }
     end
     render json: { name: @preset.name, files: files }
+  end
+
+  def restore
+    version = @preset.versions.find(params[:version_id])
+    skipped = ::PresetVersionService.new.restore_version!(@preset, version)
+    notice = "v#{version.version_number} に復元しました。"
+    if skipped.any?
+      notice += " （削除済みのリポジトリ #{skipped.size} 件はスキップされました）"
+    end
+    redirect_to @preset, notice: notice
+  end
+
+  def toggle_pin
+    version = @preset.versions.find(params[:version_id])
+    service = ::PresetVersionService.new
+    if version.pinned?
+      service.toggle_pin!(version)
+      redirect_to @preset, notice: "ピン留めを解除しました。"
+    else
+      if service.toggle_pin!(version)
+        redirect_to @preset, notice: "v#{version.version_number} をピン留めしました。"
+      else
+        redirect_to @preset, alert: "ピン留めは最大3件までです。既存のピンを外してください。"
+      end
+    end
+  end
+
+  def update_memo
+    version = @preset.versions.find(params[:version_id])
+    ::PresetVersionService.new.update_memo!(version, params[:memo].to_s.strip)
+    redirect_to @preset, notice: "メモを更新しました。"
+  end
+
+  def preview_version
+    @version = @preset.versions.includes(preset_version_items: { file_attachment: :blob }).find(params[:version_id])
+    render partial: "presets/version_preview", locals: { version: @version }, layout: false
   end
 
   def toggle_like
