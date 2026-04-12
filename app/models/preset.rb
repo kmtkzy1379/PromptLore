@@ -24,13 +24,15 @@ class Preset < ApplicationRecord
     preset_likes.exists?(user: user)
   end
 
-  def all_files
+  def all_files(viewer: nil)
     files = []
     preset_items.order(:position).each do |item|
       files << { name: item.file.filename.to_s, blob: item.file } if item.file.attached?
     end
     preset_repositories.includes(repository: { file_attachment: :blob }).order(:position).each do |pr|
-      files << { name: pr.repository.file.filename.to_s, blob: pr.repository.file } if pr.repository.file.attached?
+      next unless pr.repository.file.attached?
+      next if pr.repository.private_repo? && pr.repository.user != viewer
+      files << { name: pr.repository.file.filename.to_s, blob: pr.repository.file }
     end
     files
   end

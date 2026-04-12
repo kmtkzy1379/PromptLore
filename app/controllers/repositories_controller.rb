@@ -22,8 +22,17 @@ class RepositoriesController < ApplicationController
     detect_file_type if @repository.file.attached?
     set_default_name if @repository.name.blank? && @repository.file.attached?
 
-    if @repository.save
-      update_tags
+    save_succeeded = false
+    ActiveRecord::Base.transaction do
+      if @repository.save
+        update_tags
+        save_succeeded = true
+      else
+        raise ActiveRecord::Rollback
+      end
+    end
+
+    if save_succeeded
       redirect_to @repository, notice: "Repository was successfully created."
     else
       @categories = Category.all
@@ -134,9 +143,12 @@ class RepositoriesController < ApplicationController
     if like
       like.destroy
     else
-      @repository.likes.create(user: current_user)
+      @repository.likes.create!(user: current_user)
     end
-
+  rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+    retry_like = @repository.likes.find_by(user: current_user)
+    retry_like&.destroy
+  ensure
     redirect_to @repository
   end
 

@@ -18,10 +18,13 @@ end
 puts "Created #{Category.count} categories"
 
 # Admin user
-admin = User.find_by(email: "kmt.ps037@gmail.com")
-if admin
-  admin.update!(admin: true)
-  puts "Admin set: #{admin.email}"
-else
-  puts "Warning: kmt.ps037@gmail.com not found. Sign up first, then run seeds again."
+admin_email = ENV.fetch("ADMIN_EMAIL", nil)
+if admin_email
+  admin = User.find_by(email: admin_email)
+  if admin
+    admin.update!(admin: true)
+    puts "Admin set: #{admin.email}"
+  else
+    puts "Warning: #{admin_email} not found. Sign up first, then run seeds again."
+  end
 end

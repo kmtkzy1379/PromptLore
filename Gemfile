@@ -50,6 +50,8 @@ gem "rubyzip", require: "zip"
 gem "redcarpet"
 # Syntax highlighting [https://github.com/rouge-ruby/rouge]
 gem "rouge"
+# Rate limiting [https://github.com/rack/rack-attack]
+gem "rack-attack"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

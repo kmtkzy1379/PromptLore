@@ -1,13 +1,16 @@
 class PresetsController < ApplicationController
+  include Filterable
+
   before_action :authenticate_user!, except: [ :index, :show, :download, :download_item, :raw_content ]
-  before_action :set_preset, only: [ :show, :edit, :update, :destroy, :download, :download_item, :raw_content, :toggle_like, :restore, :toggle_pin, :update_memo, :preview_version ]
+  before_action :set_preset, only: [ :edit, :update, :destroy, :download, :download_item, :raw_content, :toggle_like, :restore, :toggle_pin, :update_memo, :preview_version ]
+  before_action :set_preset_with_includes, only: [ :show ]
   before_action :check_visibility!, only: [ :show, :download, :download_item, :raw_content, :toggle_like ]
   before_action :authorize_owner!, only: [ :edit, :update, :destroy, :restore, :toggle_pin, :update_memo, :preview_version ]
 
   def index
     presets = Preset.public_preset.includes(:user, :categories, :tags)
-    presets = apply_filters(presets)
-    presets = apply_sort(presets)
+    presets = filter_scope(presets, :preset)
+    presets = sort_scope(presets, :preset)
     @pagy, @presets = pagy(presets, items: 20)
   end
 
@@ -26,9 +29,18 @@ class PresetsController < ApplicationController
     strip_official_unless_admin
     detect_file_types
 
-    if @preset.save
-      attach_repositories
-      update_tags
+    save_succeeded = false
+    ActiveRecord::Base.transaction do
+      if @preset.save
+        attach_repositories
+        update_tags
+        save_succeeded = true
+      else
+        raise ActiveRecord::Rollback
+      end
+    end
+
+    if save_succeeded
       redirect_to @preset, notice: "Preset was successfully created."
     else
       @categories = Category.all
@@ -84,7 +96,7 @@ class PresetsController < ApplicationController
   end
 
   def download
-    files = @preset.all_files
+    files = @preset.all_files(viewer: current_user)
     if files.empty?
       redirect_to @preset, alert: "No files in this preset."
       return
@@ -109,6 +121,10 @@ class PresetsController < ApplicationController
       end
     elsif params[:item_type] == "repository"
       pr = @preset.preset_repositories.find_by!(repository_id: params[:item_id])
+      if pr.repository.private_repo? && pr.repository.user != current_user
+        redirect_to @preset, alert: "Not authorized."
+        return
+      end
       if pr.repository.file.attached?
         redirect_to rails_blob_path(pr.repository.file, disposition: "attachment")
       else
@@ -131,6 +147,7 @@ class PresetsController < ApplicationController
     end
     @preset.preset_repositories.includes(repository: { file_attachment: :blob }).order(:position).each do |pr|
       next unless pr.repository.file.attached?
+      next if pr.repository.private_repo? && pr.repository.user != current_user
       files << {
         filename: pr.repository.file.filename.to_s,
         file_type: pr.repository.file_type,
@@ -182,9 +199,12 @@ class PresetsController < ApplicationController
     if like
       like.destroy
     else
-      @preset.preset_likes.create(user: current_user)
+      @preset.preset_likes.create!(user: current_user)
     end
-
+  rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
+    retry_like = @preset.preset_likes.find_by(user: current_user)
+    retry_like&.destroy
+  ensure
     redirect_to @preset
   end
 
@@ -192,6 +212,13 @@ class PresetsController < ApplicationController
 
   def set_preset
     @preset = Preset.find(params[:id])
+  end
+
+  def set_preset_with_includes
+    @preset = Preset.includes(
+      preset_items: { file_attachment: :blob },
+      preset_repositories: { repository: [ :user, { file_attachment: :blob } ] }
+    ).find(params[:id])
   end
 
   def check_visibility!
@@ -241,46 +268,6 @@ class PresetsController < ApplicationController
     tag_names = params[:tag_names].to_s.split(",").map(&:strip).reject(&:blank?)
     tags = tag_names.map { |name| Tag.find_or_create_by!(name: name) }
     @preset.tags = tags
-  end
-
-  def apply_filters(scope)
-    if params[:category_id].present?
-      scope = scope.joins(:preset_categories).where(preset_categories: { category_id: params[:category_id] })
-    end
-
-    if params[:tag].present?
-      sanitized_tag = Preset.sanitize_sql_like(params[:tag])
-      scope = scope.joins(:tags).where("tags.name LIKE ?", "%#{sanitized_tag}%")
-    end
-
-    if params[:q].present?
-      sanitized_q = Preset.sanitize_sql_like(params[:q])
-      scope = scope.where("presets.name LIKE :q OR presets.description LIKE :q", q: "%#{sanitized_q}%")
-    end
-
-    if params[:official] == "true"
-      scope = scope.where(official: true)
-    end
-
-    scope
-  end
-
-  def apply_sort(scope)
-    case params[:sort]
-    when "oldest"
-      scope.order(created_at: :asc)
-    when "popular"
-      scope.order(likes_count: :desc)
-    when "trending"
-      scope.except(:includes)
-           .left_joins(:preset_likes)
-           .preload(:user, :categories, :tags)
-           .where("preset_likes.created_at > ? OR preset_likes.created_at IS NULL", 1.week.ago)
-           .group("presets.id")
-           .order(Arel.sql("COUNT(preset_likes.id) DESC"))
-    else
-      scope.order(created_at: :desc)
-    end
   end
 
   def generate_zip(files)

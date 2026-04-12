@@ -4,5 +4,5 @@ class Category < ApplicationRecord
   has_many :preset_categories, dependent: :destroy
   has_many :presets, through: :preset_categories
 
-  validates :name, presence: true, uniqueness: true
+  validates :name, presence: true, uniqueness: true, length: { maximum: 50 }
 end

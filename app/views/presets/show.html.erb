@@ -47,9 +47,10 @@
   <% end %>
 <% end %>
 
-<% if @preset.preset_repositories.any? %>
+<% visible_repos = @preset.preset_repositories.includes(:repository).order(:position).select { |pr| !pr.repository.private_repo? || pr.repository.user == current_user } %>
+<% if visible_repos.any? %>
   <h3>Included Repositories</h3>
-  <% @preset.preset_repositories.includes(:repository).order(:position).each do |pr| %>
+  <% visible_repos.each do |pr| %>
     <details open style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
       <summary>
         <strong><%= link_to pr.repository.name, repository_path(pr.repository) %></strong>

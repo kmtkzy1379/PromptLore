@@ -4,5 +4,5 @@ class Tag < ApplicationRecord
   has_many :preset_tags, dependent: :destroy
   has_many :presets, through: :preset_tags
 
-  validates :name, presence: true, uniqueness: true
+  validates :name, presence: true, uniqueness: true, length: { maximum: 50 }
 end
