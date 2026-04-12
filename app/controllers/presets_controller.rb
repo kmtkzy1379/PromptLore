@@ -19,14 +19,16 @@ class PresetsController < ApplicationController
 
   def new
     @preset = Preset.new
-    @preset.preset_items.build
+    @form_type = params[:type] == "preset" ? "preset" : "skill"
     @categories = Category.all
-    @user_repositories = current_user.repositories.order(:name)
+    @user_repositories = current_user.repositories.claude_md.order(:name)
   end
 
   def create
     @preset = current_user.presets.build(preset_params)
+    @preset.preset_type = params[:type] == "preset" ? :mixed : :skill_only
     strip_official_unless_admin
+    attach_uploaded_files
     detect_file_types
 
     save_succeeded = false
@@ -43,15 +45,18 @@ class PresetsController < ApplicationController
     if save_succeeded
       redirect_to @preset, notice: "Preset was successfully created."
     else
+      @form_type = params[:type] == "preset" ? "preset" : "skill"
       @categories = Category.all
-      @user_repositories = current_user.repositories.order(:name)
+      @user_repositories = current_user.repositories.claude_md.order(:name)
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
+    @form_type = @preset.preset_repositories.joins(:repository).where(repositories: { file_type: :claude_md }).exists? ? "preset" : "skill"
+    @form_type = params[:type] if params[:type].present?
     @categories = Category.all
-    @user_repositories = current_user.repositories.order(:name)
+    @user_repositories = current_user.repositories.claude_md.order(:name)
   end
 
   def update
@@ -60,6 +65,7 @@ class PresetsController < ApplicationController
       ::PresetVersionService.new.create_version!(@preset)
       @preset.assign_attributes(preset_params)
       strip_official_unless_admin
+      attach_uploaded_files
       detect_file_types
 
       if @preset.save
@@ -74,8 +80,9 @@ class PresetsController < ApplicationController
     if update_succeeded
       redirect_to @preset, notice: "Preset was successfully updated."
     else
+      @form_type = params[:type] == "preset" ? "preset" : "skill"
       @categories = Category.all
-      @user_repositories = current_user.repositories.order(:name)
+      @user_repositories = current_user.repositories.claude_md.order(:name)
       render :edit, status: :unprocessable_entity
     end
   end
@@ -142,6 +149,8 @@ class PresetsController < ApplicationController
       files << {
         filename: item.file.filename.to_s,
         file_type: item.file_type,
+        subdirectory: item.subdirectory,
+        content_type: item.file.content_type,
         content: item.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")
       }
     end
@@ -151,10 +160,17 @@ class PresetsController < ApplicationController
       files << {
         filename: pr.repository.file.filename.to_s,
         file_type: pr.repository.file_type,
+        subdirectory: "",
+        content_type: pr.repository.file.content_type,
         content: pr.repository.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")
       }
     end
-    render json: { name: @preset.name, files: files }
+    render json: {
+      name: @preset.name,
+      skill_name: @preset.skill_name,
+      is_skill_package: @preset.is_skill_package,
+      files: files
+    }
   end
 
   def restore
@@ -235,12 +251,48 @@ class PresetsController < ApplicationController
     params.require(:preset).permit(
       :name, :description, :visibility, :official,
       category_ids: [],
-      preset_items_attributes: [ :id, :file, :position, :_destroy ]
+      preset_items_attributes: [ :id, :file, :position, :subdirectory, :_destroy ]
     )
   end
 
   def strip_official_unless_admin
     @preset.official = false unless current_user.admin?
+  end
+
+  def attach_uploaded_files
+    # Handle folder upload (webkitdirectory)
+    if params[:folder_files].present?
+      paths = begin
+        JSON.parse(params[:folder_paths].to_s)
+      rescue JSON::ParserError
+        []
+      end
+
+      params[:folder_files].each_with_index do |file, i|
+        path_info = paths[i] || {}
+        next if path_info["skip"]
+
+        subdirectory = path_info["subdirectory"].to_s
+        @preset.preset_items.build(
+          file: file,
+          subdirectory: subdirectory,
+          position: @preset.preset_items.size,
+          file_type: :skill
+        )
+      end
+    end
+
+    # Handle individual file upload
+    if params[:upload_files].present?
+      params[:upload_files].each do |file|
+        @preset.preset_items.build(
+          file: file,
+          subdirectory: "",
+          position: @preset.preset_items.size,
+          file_type: :skill
+        )
+      end
+    end
   end
 
   def detect_file_types
@@ -252,6 +304,7 @@ class PresetsController < ApplicationController
         item.file_type = :skill
       end
     end
+    @preset.detect_skill_package!
   end
 
   def attach_repositories

@@ -11,12 +11,12 @@
   <% end %>
 
   <div>
-    <p><%= f.label :file, "File (.md)" %></p>
+    <p><%= f.label :file, "CLAUDE.md ファイル" %></p>
     <p><%= f.file_field :file, accept: ".md" %></p>
     <% if repository.file.attached? %>
       <p>Current file: <%= repository.file.filename %></p>
     <% end %>
-    <p><em>CLAUDE.md files are auto-detected. Other .md files are treated as Skills.</em></p>
+    <p><em>CLAUDE.md ファイルをアップロードしてください。Skills は Preset のフォルダアップロードから登録できます。</em></p>
   </div>
 
   <div>

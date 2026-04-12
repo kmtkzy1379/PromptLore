@@ -32,7 +32,11 @@ class UsersController < ApplicationController
 
     @pagy, @repositories = pagy(repositories.includes(:categories, :tags), items: 20, page_param: :repos_page)
 
-    presets = @user.presets
+    skills = @user.presets.skill_only
+    skills = skills.public_preset unless current_user == @user
+    @pagy_skills, @skills = pagy(skills.includes(:categories, :tags).order(created_at: :desc), items: 20, page_param: :skills_page)
+
+    presets = @user.presets.mixed
     presets = presets.public_preset unless current_user == @user
     @pagy_presets, @presets = pagy(presets.includes(:categories, :tags).order(created_at: :desc), items: 20, page_param: :presets_page)
   end

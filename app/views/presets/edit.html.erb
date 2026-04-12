@@ -1,4 +1,4 @@
-<h1>Edit Preset</h1>
+<h1><%= @form_type == "preset" ? "Edit Preset" : "Edit Skills" %></h1>
 
 <%= render "form", preset: @preset %>
 

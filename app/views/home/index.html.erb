@@ -2,13 +2,62 @@
 <p>Share your Claude.md and Skills with the community.</p>
 
 <div style="margin-bottom: 15px;">
-  <%= link_to "Repositories", root_path(tab: "repositories"),
-      style: params[:tab] != "presets" ? "font-weight:bold; margin-right: 15px;" : "margin-right: 15px;" %>
+  <%= link_to "CLAUDE.md", root_path(tab: "repositories"),
+      style: params[:tab].blank? || params[:tab] == "repositories" ? "font-weight:bold; margin-right: 15px;" : "margin-right: 15px;" %>
+  <%= link_to "Skills", root_path(tab: "skills"),
+      style: params[:tab] == "skills" ? "font-weight:bold; margin-right: 15px;" : "margin-right: 15px;" %>
   <%= link_to "Presets", root_path(tab: "presets"),
       style: params[:tab] == "presets" ? "font-weight:bold;" : "" %>
 </div>
 
-<% if params[:tab] == "presets" %>
+<% if params[:tab] == "skills" %>
+  <%= form_tag root_path, method: :get do %>
+    <%= hidden_field_tag :tab, "skills" %>
+    <div>
+      <%= text_field_tag :q, params[:q], placeholder: "Search skills..." %>
+      <%= select_tag :category_id, options_for_select([["All categories", ""]] + Category.pluck(:name, :id), params[:category_id]) %>
+      <%= text_field_tag :tag, params[:tag], placeholder: "Tag search..." %>
+      <%= select_tag :sort, options_for_select([["Newest", "newest"], ["Oldest", "oldest"], ["Popular", "popular"], ["Trending", "trending"]], params[:sort]) %>
+      <label>
+        <%= check_box_tag :official, "true", params[:official] == "true" %>
+        Official only
+      </label>
+      <%= submit_tag "Search" %>
+    </div>
+  <% end %>
+
+  <hr>
+
+  <% if @skills.any? %>
+    <% @skills.each do |preset| %>
+      <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+        <h3>
+          <%= link_to preset.name, preset_path(preset) %>
+          <% if preset.official? %>
+            <span style="background: #28a745; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 12px;">Official</span>
+          <% end %>
+        </h3>
+        <p>
+          <strong>By:</strong> <%= link_to preset.user.username, user_path(preset.user) %> |
+          <strong>Likes:</strong> <%= preset.likes_count %> |
+          <strong>Downloads:</strong> <%= preset.downloads_count %>
+        </p>
+        <p><%= truncate(preset.description, length: 150) %></p>
+        <% if preset.categories.any? %>
+          <p><strong>Categories:</strong> <%= preset.categories.pluck(:name).join(", ") %></p>
+        <% end %>
+        <% if preset.tags.any? %>
+          <p><strong>Tags:</strong> <%= preset.tags.pluck(:name).join(", ") %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%== @pagy.series_nav %>
+  <% else %>
+    <p>No skills found.</p>
+  <% end %>
+
+<% elsif params[:tab] == "presets" %>
   <%= form_tag root_path, method: :get do %>
     <%= hidden_field_tag :tab, "presets" %>
     <div>
@@ -58,8 +107,7 @@
 <% else %>
   <%= form_tag root_path, method: :get do %>
     <div>
-      <%= text_field_tag :q, params[:q], placeholder: "Search repositories..." %>
-      <%= select_tag :file_type, options_for_select([["All types", ""], ["CLAUDE.md", "claude_md"], ["Skill", "skill"]], params[:file_type]) %>
+      <%= text_field_tag :q, params[:q], placeholder: "Search CLAUDE.md..." %>
       <%= select_tag :category_id, options_for_select([["All categories", ""]] + Category.pluck(:name, :id), params[:category_id]) %>
       <%= text_field_tag :tag, params[:tag], placeholder: "Tag search..." %>
       <%= select_tag :sort, options_for_select([["Newest", "newest"], ["Oldest", "oldest"], ["Popular", "popular"], ["Trending", "trending"]], params[:sort]) %>
@@ -74,7 +122,6 @@
       <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
         <h3><%= link_to repo.name, repository_path(repo) %></h3>
         <p>
-          <strong>Type:</strong> <%= repo.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %> |
           <strong>By:</strong> <%= link_to repo.user.username, user_path(repo.user) %> |
           <strong>Likes:</strong> <%= repo.likes_count %> |
           <strong>Downloads:</strong> <%= repo.downloads_count %>
@@ -91,6 +138,6 @@
 
     <%== @pagy.series_nav %>
   <% else %>
-    <p>No repositories found.</p>
+    <p>No CLAUDE.md files found.</p>
   <% end %>
 <% end %>

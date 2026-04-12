@@ -20,6 +20,7 @@ class Repository < ApplicationRecord
   validate :file_must_be_attached, on: :create
   validate :file_must_be_markdown
   validate :file_size_within_limit
+  validate :must_be_claude_md, on: :create
 
   def liked_by?(user)
     return false unless user
@@ -45,6 +46,13 @@ class Repository < ApplicationRecord
     return unless file.attached?
     if file.byte_size > 2.megabytes
       errors.add(:file, "must be less than 2MB")
+    end
+  end
+
+  def must_be_claude_md
+    return unless file.attached?
+    unless file.filename.to_s.downcase == "claude.md"
+      errors.add(:file, "must be named CLAUDE.md. Skills should be uploaded as a folder via Presets.")
     end
   end
 end

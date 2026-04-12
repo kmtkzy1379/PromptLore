@@ -1,11 +1,11 @@
-<h1>All Repositories</h1>
+<h1>All CLAUDE.md</h1>
 
 <% if @repositories.any? %>
   <% @repositories.each do |repo| %>
     <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
       <h3><%= link_to repo.name, repository_path(repo) %></h3>
       <p>
-        <strong>Type:</strong> <%= repo.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %> |
+        <strong>Type:</strong> CLAUDE.md |
         <strong>By:</strong> <%= link_to repo.user.username, user_path(repo.user) %> |
         <strong>Likes:</strong> <%= repo.likes_count %>
       </p>

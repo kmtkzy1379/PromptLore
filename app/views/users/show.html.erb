@@ -10,13 +10,12 @@
   <p><%= link_to "Edit Profile", edit_user_path(@user) %></p>
 <% end %>
 
-<h2>Repositories (<%= @pagy.count %>)</h2>
+<h2>CLAUDE.md (<%= @pagy.count %>)</h2>
 
 <%= form_tag user_path(@user), method: :get do %>
   <div>
     <%= text_field_tag :q, params[:q], placeholder: "Search..." %>
     <%= text_field_tag :tag, params[:tag], placeholder: "Tag search..." %>
-    <%= select_tag :file_type, options_for_select([["All types", ""], ["CLAUDE.md", "claude_md"], ["Skill", "skill"]], params[:file_type]) %>
     <%= select_tag :sort, options_for_select([["Newest", "newest"], ["Oldest", "oldest"], ["Popular", "popular"]], params[:sort]) %>
     <%= submit_tag "Search" %>
   </div>
@@ -26,7 +25,6 @@
   <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
     <h3><%= link_to repo.name, repository_path(repo) %></h3>
     <p>
-      <strong>Type:</strong> <%= repo.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %> |
       <strong>Visibility:</strong> <%= repo.public_repo? ? "Public" : "Private" %> |
       <strong>Likes:</strong> <%= repo.likes_count %> |
       <strong>Downloads:</strong> <%= repo.downloads_count %>
@@ -36,6 +34,29 @@
 <% end %>
 
 <%== @pagy.series_nav %>
+
+<hr>
+
+<h2>Skills (<%= @pagy_skills.count %>)</h2>
+
+<% @skills.each do |preset| %>
+  <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+    <h3>
+      <%= link_to preset.name, preset_path(preset) %>
+      <% if preset.official? %>
+        <span style="background: #28a745; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 12px;">Official</span>
+      <% end %>
+    </h3>
+    <p>
+      <strong>Visibility:</strong> <%= preset.public_preset? ? "Public" : "Private" %> |
+      <strong>Likes:</strong> <%= preset.likes_count %> |
+      <strong>Downloads:</strong> <%= preset.downloads_count %>
+    </p>
+    <p><%= truncate(preset.description, length: 150) %></p>
+  </div>
+<% end %>
+
+<%== @pagy_skills.series_nav %>
 
 <hr>
 

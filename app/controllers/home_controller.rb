@@ -2,8 +2,14 @@ class HomeController < ApplicationController
   include Filterable
 
   def index
-    if params[:tab] == "presets"
-      presets = Preset.public_preset.includes(:user, :categories, :tags)
+    case params[:tab]
+    when "skills"
+      presets = Preset.skill_only.public_preset.includes(:user, :categories, :tags)
+      presets = filter_scope(presets, :preset)
+      presets = sort_scope(presets, :preset)
+      @pagy, @skills = pagy(presets, items: 20)
+    when "presets"
+      presets = Preset.mixed.public_preset.includes(:user, :categories, :tags)
       presets = filter_scope(presets, :preset)
       presets = sort_scope(presets, :preset)
       @pagy, @presets = pagy(presets, items: 20)

@@ -30,31 +30,79 @@
 
 <% if @preset.preset_items.any? %>
   <h3>Uploaded Files</h3>
-  <% @preset.preset_items.order(:position).each do |item| %>
-    <% if item.file.attached? %>
+  <% if @preset.is_skill_package? %>
+    <p style="color: #555; font-size: 0.9em;">
+      Skill Package: <code><%= @preset.skill_name %>/</code>
+    </p>
+    <% grouped = @preset.preset_items.order(:position).select { |i| i.file.attached? }.group_by { |i| i.subdirectory.presence || "" } %>
+    <% grouped.keys.sort_by { |k| k.empty? ? "" : k }.each do |dir| %>
+      <% items = grouped[dir] %>
+      <% dir_label = dir.empty? ? "/ (root)" : "#{dir}/" %>
       <details open style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
-        <summary>
-          <strong><%= item.file.filename %></strong>
-          (<%= item.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %>)
-          &mdash;
-          <%= link_to "Download", download_item_preset_path(@preset, item_type: "preset_item", item_id: item.id) %>
-        </summary>
-        <div class="markdown-body" style="margin-top: 10px;">
-          <%= render_markdown(item.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")) %>
-        </div>
+        <summary style="font-weight: bold;"><%= dir_label %></summary>
+        <% items.each do |item| %>
+          <details open style="padding: 4px 8px; margin: 4px 0; border-left: 3px solid #eee;">
+            <summary>
+              <strong><%= item.file.filename %></strong>
+              &mdash;
+              <%= link_to "Download", download_item_preset_path(@preset, item_type: "preset_item", item_id: item.id) %>
+            </summary>
+            <div class="markdown-body" style="margin-top: 10px;">
+              <%= render_markdown(item.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")) %>
+            </div>
+          </details>
+        <% end %>
       </details>
+    <% end %>
+  <% else %>
+    <% @preset.preset_items.order(:position).each do |item| %>
+      <% if item.file.attached? %>
+        <details open style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
+          <summary>
+            <strong><%= item.file.filename %></strong>
+            (<%= item.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %>)
+            &mdash;
+            <%= link_to "Download", download_item_preset_path(@preset, item_type: "preset_item", item_id: item.id) %>
+          </summary>
+          <div class="markdown-body" style="margin-top: 10px;">
+            <%= render_markdown(item.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")) %>
+          </div>
+        </details>
+      <% end %>
     <% end %>
   <% end %>
 <% end %>
 
 <% visible_repos = @preset.preset_repositories.includes(:repository).order(:position).select { |pr| !pr.repository.private_repo? || pr.repository.user == current_user } %>
-<% if visible_repos.any? %>
-  <h3>Included Repositories</h3>
-  <% visible_repos.each do |pr| %>
+<% claude_repos = visible_repos.select { |pr| pr.repository.claude_md? } %>
+<% skill_repos = visible_repos.reject { |pr| pr.repository.claude_md? } %>
+
+<% if claude_repos.any? %>
+  <h3>CLAUDE.md（プロジェクト直下に配置）</h3>
+  <% claude_repos.each do |pr| %>
     <details open style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
       <summary>
         <strong><%= link_to pr.repository.name, repository_path(pr.repository) %></strong>
-        (<%= pr.repository.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %>)
+        <% if pr.repository.file.attached? %>
+          &mdash;
+          <%= link_to "Download", download_item_preset_path(@preset, item_type: "repository", item_id: pr.repository.id) %>
+        <% end %>
+      </summary>
+      <% if pr.repository.file.attached? %>
+        <div class="markdown-body" style="margin-top: 10px;">
+          <%= render_markdown(pr.repository.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")) %>
+        </div>
+      <% end %>
+    </details>
+  <% end %>
+<% end %>
+
+<% if skill_repos.any? %>
+  <h3>Included Repositories</h3>
+  <% skill_repos.each do |pr| %>
+    <details open style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
+      <summary>
+        <strong><%= link_to pr.repository.name, repository_path(pr.repository) %></strong>
         <% if pr.repository.file.attached? %>
           &mdash;
           <%= link_to "Download", download_item_preset_path(@preset, item_type: "repository", item_id: pr.repository.id) %>
@@ -80,7 +128,8 @@
 
 <%= render "shared/install_actions",
      raw_content_url: raw_content_preset_path(@preset),
-     resource_type: "preset" %>
+     resource_type: "preset",
+     skill_package: @preset.is_skill_package? %>
 
 <div style="margin-top: 10px;">
   <% if user_signed_in? %>

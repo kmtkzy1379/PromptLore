@@ -12,22 +12,44 @@ class Preset < ApplicationRecord
   has_many :versions, class_name: "PresetVersion", dependent: :destroy
 
   enum :visibility, { public_preset: 0, private_preset: 1 }
+  enum :preset_type, { skill_only: 0, mixed: 1 }
 
   validates :name, presence: true, length: { maximum: 100 }
   validates :visibility, presence: true
+  validates :is_skill_package, inclusion: { in: [ true, false ] }
   validate :official_only_by_admin
 
-  accepts_nested_attributes_for :preset_items, allow_destroy: true, reject_if: :all_blank
+  accepts_nested_attributes_for :preset_items, allow_destroy: true,
+    reject_if: proc { |attrs| attrs["file"].blank? && attrs["id"].blank? }
 
   def liked_by?(user)
     return false unless user
     preset_likes.exists?(user: user)
   end
 
+  def skill_name
+    name.parameterize
+  end
+
+  def detect_skill_package!
+    has_skill_md = preset_items.any? { |item|
+      item.file.attached? &&
+      item.file.filename.to_s.casecmp("skill.md").zero? &&
+      item.subdirectory.blank?
+    }
+    self.is_skill_package = has_skill_md
+  end
+
   def all_files(viewer: nil)
     files = []
     preset_items.order(:position).each do |item|
-      files << { name: item.file.filename.to_s, blob: item.file } if item.file.attached?
+      next unless item.file.attached?
+      zip_name = if is_skill_package? && item.subdirectory.present?
+                   "#{item.subdirectory}/#{item.file.filename}"
+                 else
+                   item.file.filename.to_s
+                 end
+      files << { name: zip_name, blob: item.file }
     end
     preset_repositories.includes(repository: { file_attachment: :blob }).order(:position).each do |pr|
       next unless pr.repository.file.attached?

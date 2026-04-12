@@ -26,7 +26,8 @@ class PresetVersionService
       next unless item.file.attached?
       vi = version.preset_version_items.create!(
         file_type: item.file_type_before_type_cast,
-        position: item.position
+        position: item.position,
+        subdirectory: item.subdirectory
       )
       vi.file.attach(item.file.blob)
     end
@@ -59,10 +60,15 @@ class PresetVersionService
       next unless vi.file.attached?
       item = preset.preset_items.create!(
         file_type: vi.file_type,
-        position: vi.position
+        position: vi.position,
+        subdirectory: vi.subdirectory
       )
       item.file.attach(vi.file.blob)
     end
+
+    # Re-detect skill package status
+    preset.detect_skill_package!
+    preset.save!
 
     # Restore preset_repositories
     preset.preset_repositories.destroy_all

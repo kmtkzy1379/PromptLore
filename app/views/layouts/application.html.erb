@@ -25,8 +25,9 @@
       <%= link_to "PromptLore", root_path %> |
       <% if user_signed_in? %>
         <%= link_to current_user.username, user_path(current_user) %> |
-        <%= link_to "Upload", new_repository_path %> |
-        <%= link_to "New Preset", new_preset_path %> |
+        <%= link_to "CLAUDE.md", new_repository_path %> |
+        <%= link_to "Skills", new_preset_path(type: "skill") %> |
+        <%= link_to "Preset", new_preset_path(type: "preset") %> |
         <%= link_to "Sign out", destroy_user_session_path, data: { turbo_method: :delete } %>
       <% else %>
         <%= link_to "Sign in", new_user_session_path %> |

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_11_035120) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_12_145927) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -71,6 +71,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_035120) do
     t.integer "file_type", default: 0, null: false
     t.integer "position", default: 0, null: false
     t.integer "preset_id", null: false
+    t.string "subdirectory", default: "", null: false
     t.datetime "updated_at", null: false
     t.index ["preset_id"], name: "index_preset_items_on_preset_id"
   end
@@ -111,6 +112,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_035120) do
     t.integer "file_type", default: 0, null: false
     t.integer "position", default: 0, null: false
     t.integer "preset_version_id", null: false
+    t.string "subdirectory", default: "", null: false
     t.datetime "updated_at", null: false
     t.index ["preset_version_id"], name: "index_preset_version_items_on_preset_version_id"
   end
@@ -137,9 +139,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_11_035120) do
     t.datetime "created_at", null: false
     t.text "description"
     t.integer "downloads_count", default: 0, null: false
+    t.boolean "is_skill_package", default: false, null: false
     t.integer "likes_count", default: 0, null: false
     t.string "name", null: false
     t.boolean "official", default: false, null: false
+    t.integer "preset_type", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.integer "visibility", default: 0, null: false

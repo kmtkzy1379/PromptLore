@@ -1,4 +1,4 @@
-<%= form_with(model: preset) do |f| %>
+<%= form_with(model: preset, multipart: true, data: { turbo: false }) do |f| %>
   <% if preset.errors.any? %>
     <div>
       <h2><%= pluralize(preset.errors.count, "error") %> prohibited this preset from being saved:</h2>
@@ -10,8 +10,10 @@
     </div>
   <% end %>
 
+  <%= hidden_field_tag :type, @form_type %>
+
   <div>
-    <p><%= f.label :name, "Preset Name" %></p>
+    <p><%= f.label :name, @form_type == "preset" ? "Preset Name" : "Skills Name" %></p>
     <p><%= f.text_field :name %></p>
   </div>
 
@@ -34,54 +36,86 @@
     </div>
   <% end %>
 
-  <fieldset>
-    <legend>Include existing repositories</legend>
-    <% if @user_repositories.any? %>
-      <% selected_repo_ids = preset.persisted? ? preset.preset_repositories.pluck(:repository_id) : [] %>
-      <% @user_repositories.each do |repo| %>
-        <label style="display: block; margin: 3px 0;">
-          <%= check_box_tag "repository_ids[]", repo.id, selected_repo_ids.include?(repo.id) %>
-          <%= repo.name %> (<%= repo.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %>)
-        </label>
+  <% if @form_type == "preset" %>
+    <fieldset>
+      <legend>CLAUDE.md を含める</legend>
+      <% if @user_repositories.any? %>
+        <% selected_repo_ids = preset.persisted? ? preset.preset_repositories.pluck(:repository_id) : [] %>
+        <% @user_repositories.each do |repo| %>
+          <label style="display: block; margin: 3px 0;">
+            <%= check_box_tag "repository_ids[]", repo.id, selected_repo_ids.include?(repo.id) %>
+            <%= repo.name %>
+          </label>
+        <% end %>
+      <% else %>
+        <p><em>CLAUDE.md がまだありません。<%= link_to "CLAUDE.md をアップロード", new_repository_path %>してからここで選択できます。</em></p>
       <% end %>
+    </fieldset>
+  <% end %>
+
+  <fieldset data-controller="file-upload">
+    <legend><%= @form_type == "preset" ? "Skills ファイル" : "Skills フォルダをアップロード" %></legend>
+
+    <% if @form_type == "skill" %>
+      <p style="color: #666; font-size: 0.85em; margin: 0 0 10px;">
+        スキルフォルダ（SKILL.md を含むフォルダ）をアップロードしてください。<br>
+        ディレクトリ構造が自動で保持されます。
+      </p>
     <% else %>
-      <p><em>No repositories yet. You can upload files below.</em></p>
+      <p style="color: #666; font-size: 0.85em; margin: 0 0 10px;">
+        .md ファイルや、スキルフォルダ（SKILL.md を含むフォルダ）をアップロードできます。<br>
+        フォルダの場合、ディレクトリ構造が自動で保持されます。
+      </p>
     <% end %>
-  </fieldset>
 
-  <fieldset data-controller="nested-fields">
-    <legend>Upload new files (.md)</legend>
+    <%# File inputs with name attributes so they're submitted %>
+    <input type="file" multiple name="upload_files[]"
+           data-file-upload-target="fileInput"
+           data-action="change->file-upload#onFilesSelected"
+           style="display: none;">
+    <input type="file" webkitdirectory multiple name="folder_files[]"
+           data-file-upload-target="folderInput"
+           data-action="change->file-upload#onFolderSelected"
+           style="display: none;">
+    <input type="hidden" name="folder_paths"
+           data-file-upload-target="pathsField" value="">
 
-    <div data-nested-fields-target="container">
-      <%= f.fields_for :preset_items do |item_f| %>
-        <div class="preset-item-fields" style="border: 1px solid #eee; padding: 8px; margin: 5px 0;">
-          <% if item_f.object.persisted? && item_f.object.file.attached? %>
-            <p>Current: <%= item_f.object.file.filename %></p>
-          <% end %>
-          <%= item_f.file_field :file, accept: ".md" %>
-          <%= item_f.hidden_field :position, value: item_f.index %>
-          <% if item_f.object.persisted? %>
-            <label>
-              <%= item_f.check_box :_destroy %>
-              Remove
-            </label>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <% if @form_type == "preset" %>
+        <button type="button" data-action="click->file-upload#selectFiles"
+                style="padding: 8px 16px; cursor: pointer; border: 1px solid #0969da; background: #fff; color: #0969da; border-radius: 4px;">
+          ファイルを選択
+        </button>
+      <% end %>
+      <button type="button" data-action="click->file-upload#selectFolder"
+              style="padding: 8px 16px; cursor: pointer; border: 1px solid #2da44e; background: #fff; color: #2da44e; border-radius: 4px;">
+        フォルダを選択
+      </button>
+    </div>
+
+    <%# Preview area %>
+    <div data-file-upload-target="preview" style="margin-top: 10px;"></div>
+
+    <%# Edit mode: show existing files %>
+    <% if preset.persisted? %>
+      <% existing_items = preset.preset_items.select { |i| i.persisted? && i.file.attached? } %>
+      <% if existing_items.any? %>
+        <div style="margin-top: 10px;">
+          <p style="color: #555; font-size: 0.9em;"><strong>Current files:</strong></p>
+          <%= f.fields_for :preset_items do |item_f| %>
+            <% next unless item_f.object.persisted? && item_f.object.file.attached? %>
+            <div style="border: 1px solid #eee; padding: 6px 8px; margin: 3px 0; display: flex; align-items: center; gap: 8px;">
+              <code style="font-size: 0.85em;"><%= item_f.object.skill_relative_path %></code>
+              <%= item_f.hidden_field :subdirectory %>
+              <%= item_f.hidden_field :position %>
+              <label style="margin-left: auto; font-size: 0.85em;">
+                <%= item_f.check_box :_destroy %> Remove
+              </label>
+            </div>
           <% end %>
         </div>
       <% end %>
-    </div>
-
-    <template data-nested-fields-target="template">
-      <div class="preset-item-fields" style="border: 1px solid #eee; padding: 8px; margin: 5px 0;">
-        <%= f.fields_for :preset_items, PresetItem.new, child_index: "NEW_RECORD" do |item_f| %>
-          <%= item_f.file_field :file, accept: ".md" %>
-          <%= item_f.hidden_field :position, value: 0 %>
-        <% end %>
-      </div>
-    </template>
-
-    <p>
-      <button type="button" data-action="nested-fields#add">+ Add another file</button>
-    </p>
+    <% end %>
   </fieldset>
 
   <div>
