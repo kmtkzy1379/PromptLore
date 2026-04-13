@@ -28,7 +28,7 @@ module Filterable
       scope = scope.where(file_type: params[:file_type])
     end
 
-    if resource_type == :preset && params[:official] == "true"
+    if params[:official] == "true"
       scope = scope.where(official: true)
     end
 

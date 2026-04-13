@@ -111,6 +111,10 @@
       <%= select_tag :category_id, options_for_select([["All categories", ""]] + Category.pluck(:name, :id), params[:category_id]) %>
       <%= text_field_tag :tag, params[:tag], placeholder: "Tag search..." %>
       <%= select_tag :sort, options_for_select([["Newest", "newest"], ["Oldest", "oldest"], ["Popular", "popular"], ["Trending", "trending"]], params[:sort]) %>
+      <label>
+        <%= check_box_tag :official, "true", params[:official] == "true" %>
+        Official only
+      </label>
       <%= submit_tag "Search" %>
     </div>
   <% end %>
@@ -120,7 +124,12 @@
   <% if @repositories.any? %>
     <% @repositories.each do |repo| %>
       <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-        <h3><%= link_to repo.name, repository_path(repo) %></h3>
+        <h3>
+          <%= link_to repo.name, repository_path(repo) %>
+          <% if repo.official? %>
+            <span style="background: #28a745; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 12px;">Official</span>
+          <% end %>
+        </h3>
         <p>
           <strong>By:</strong> <%= link_to repo.user.username, user_path(repo.user) %> |
           <strong>Likes:</strong> <%= repo.likes_count %> |

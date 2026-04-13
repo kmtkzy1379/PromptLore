@@ -21,6 +21,7 @@ class Repository < ApplicationRecord
   validate :file_must_be_markdown
   validate :file_size_within_limit
   validate :must_be_claude_md, on: :create
+  validate :official_only_by_admin
 
   def liked_by?(user)
     return false unless user
@@ -46,6 +47,12 @@ class Repository < ApplicationRecord
     return unless file.attached?
     if file.byte_size > 2.megabytes
       errors.add(:file, "must be less than 2MB")
+    end
+  end
+
+  def official_only_by_admin
+    if official_changed? && official? && !user&.admin?
+      errors.add(:official, "can only be set by admin users")
     end
   end
 

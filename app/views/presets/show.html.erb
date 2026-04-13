@@ -38,10 +38,10 @@
     <% grouped.keys.sort_by { |k| k.empty? ? "" : k }.each do |dir| %>
       <% items = grouped[dir] %>
       <% dir_label = dir.empty? ? "/ (root)" : "#{dir}/" %>
-      <details open style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
+      <details style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
         <summary style="font-weight: bold;"><%= dir_label %></summary>
         <% items.each do |item| %>
-          <details open style="padding: 4px 8px; margin: 4px 0; border-left: 3px solid #eee;">
+          <details style="padding: 4px 8px; margin: 4px 0; border-left: 3px solid #eee;">
             <summary>
               <strong><%= item.file.filename %></strong>
               &mdash;
@@ -57,7 +57,7 @@
   <% else %>
     <% @preset.preset_items.order(:position).each do |item| %>
       <% if item.file.attached? %>
-        <details open style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
+        <details style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
           <summary>
             <strong><%= item.file.filename %></strong>
             (<%= item.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %>)
@@ -80,7 +80,7 @@
 <% if claude_repos.any? %>
   <h3>CLAUDE.md（プロジェクト直下に配置）</h3>
   <% claude_repos.each do |pr| %>
-    <details open style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
+    <details style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
       <summary>
         <strong><%= link_to pr.repository.name, repository_path(pr.repository) %></strong>
         <% if pr.repository.file.attached? %>
@@ -100,7 +100,7 @@
 <% if skill_repos.any? %>
   <h3>Included Repositories</h3>
   <% skill_repos.each do |pr| %>
-    <details open style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
+    <details style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
       <summary>
         <strong><%= link_to pr.repository.name, repository_path(pr.repository) %></strong>
         <% if pr.repository.file.attached? %>

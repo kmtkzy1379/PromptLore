@@ -1,7 +1,12 @@
-<h1><%= @repository.name %></h1>
+<h1>
+  <%= @repository.name %>
+  <% if @repository.official? %>
+    <span style="background: #28a745; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 14px;">Official</span>
+  <% end %>
+</h1>
 
 <p>
-  <strong>Type:</strong> <%= @repository.file_type == "claude_md" ? "CLAUDE.md" : "Skill" %> |
+  <strong>Type:</strong> CLAUDE.md |
   <strong>Visibility:</strong> <%= @repository.public_repo? ? "Public" : "Private" %> |
   <strong>By:</strong> <%= link_to @repository.user.username, user_path(@repository.user) %> |
   <strong>Likes:</strong> <%= @repository.likes_count %> |
@@ -23,14 +28,16 @@
 <% end %>
 
 <% if @repository.file.attached? %>
-  <h3>File Content</h3>
-  <div class="markdown-body">
-    <%= render_markdown(@repository.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")) %>
-  </div>
-
-  <p>
-    <%= link_to "Download", download_repository_path(@repository) %>
-  </p>
+  <details style="border: 1px solid #ddd; padding: 8px; margin: 5px 0;">
+    <summary>
+      <strong><%= @repository.file.filename %></strong>
+      &mdash;
+      <%= link_to "Download", download_repository_path(@repository) %>
+    </summary>
+    <div class="markdown-body" style="margin-top: 10px;">
+      <%= render_markdown(@repository.file.download.encode("UTF-8", "UTF-8", invalid: :replace, undef: :replace, replace: "?")) %>
+    </div>
+  </details>
 
   <%= render "shared/install_actions",
        raw_content_url: raw_content_repository_path(@repository),

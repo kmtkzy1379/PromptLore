@@ -19,6 +19,7 @@ class RepositoriesController < ApplicationController
 
   def create
     @repository = current_user.repositories.build(repository_params)
+    strip_official_unless_admin
     detect_file_type if @repository.file.attached?
     set_default_name if @repository.name.blank? && @repository.file.attached?
 
@@ -49,6 +50,7 @@ class RepositoriesController < ApplicationController
     ActiveRecord::Base.transaction do
       ::RepositoryVersionService.new.create_version!(@repository)
       @repository.assign_attributes(repository_params)
+      strip_official_unless_admin
       detect_file_type if @repository.file.attached?
 
       if @repository.save
@@ -169,7 +171,7 @@ class RepositoriesController < ApplicationController
   end
 
   def repository_params
-    params.require(:repository).permit(:name, :description, :visibility, :file, category_ids: [])
+    params.require(:repository).permit(:name, :description, :visibility, :file, :official, category_ids: [])
   end
 
   def detect_file_type
@@ -183,6 +185,10 @@ class RepositoriesController < ApplicationController
 
   def set_default_name
     @repository.name = @repository.file.filename.to_s.sub(/\.md\z/i, "")
+  end
+
+  def strip_official_unless_admin
+    @repository.official = false unless current_user.admin?
   end
 
   def update_tags

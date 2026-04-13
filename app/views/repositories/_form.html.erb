@@ -1,4 +1,4 @@
-<%= form_with(model: repository) do |f| %>
+<%= form_with(model: repository, data: { turbo: false }) do |f| %>
   <% if repository.errors.any? %>
     <div>
       <h2><%= pluralize(repository.errors.count, "error") %> prohibited this repository from being saved:</h2>
@@ -33,6 +33,15 @@
     <p><%= f.label :visibility %></p>
     <p><%= f.select :visibility, Repository.visibilities.keys.map { |v| [v == "public_repo" ? "Public" : "Private", v] } %></p>
   </div>
+
+  <% if current_user&.admin? %>
+    <div>
+      <label>
+        <%= f.check_box :official %>
+        Mark as Official
+      </label>
+    </div>
+  <% end %>
 
   <div>
     <p><label>Categories</label></p>

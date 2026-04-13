@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_12_145927) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_13_005342) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -159,6 +159,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_145927) do
     t.integer "file_type", default: 0, null: false
     t.integer "likes_count", default: 0, null: false
     t.string "name", null: false
+    t.boolean "official", default: false, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.integer "visibility", default: 0, null: false
