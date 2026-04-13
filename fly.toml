@@ -1,0 +1,50 @@
+# fly.toml app configuration file generated for promptlore on 2026-04-14T00:32:18+09:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'promptlore'
+primary_region = 'nrt'
+console_command = '/rails/bin/rails console'
+
+[build]
+
+[env]
+  RAILS_ENV = 'production'
+  RAILS_LOG_LEVEL = 'info'
+  SOLID_QUEUE_IN_PUMA = 'true'
+  WEB_CONCURRENCY = '0'
+  RAILS_MAX_THREADS = '3'
+  PORT = '8080'
+
+[processes]
+  app = './bin/rails server -b 0.0.0.0'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'off'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+  [http_service.concurrency]
+    type = 'connections'
+    hard_limit = 25
+    soft_limit = 20
+
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '60s'
+    method = 'GET'
+    path = '/up'
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[mounts]
+  source = 'promptlore_storage'
+  destination = '/rails/storage'
