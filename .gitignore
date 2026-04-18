@@ -35,3 +35,6 @@
 
 # Local AI / editor artifacts (do not publish)
 .claude/
+
+# Ad-hoc screenshots at repo root (e.g. desktop drops)
+/*.png
